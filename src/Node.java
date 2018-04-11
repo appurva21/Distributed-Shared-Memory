@@ -3,49 +3,86 @@ import java.io.*;
 
 public class Node {
     
-    private ArrayList<Page> pageTable;
+    private TreeMap<Integer,String> pageTable;
     private ArrayList<Integer> requiredPages;
-    private final int SIZE = 2;
-    public Node(String name, ArrayList page, ArrayList required){
+    private final int SIZE = 3;
+    MessageWindow window;
+    public Node(String name, TreeMap page, ArrayList required) throws InterruptedException{
+        window = new MessageWindow(name);
+        window.setVisible(true);
+        synchronized(window){
+            window.set("Node "+name+" Created");
+        }
+        System.out.println("Node "+name+" Created");
         this.name = name;
         this.pageTable = page;
         this.requiredPages = required;
-        this.initalize(name,pageTable);
+        
+        initalize(name, pageTable);
+        Thread.sleep(4000);
     }
-    public void initalize(String name,ArrayList<Page> pageTable){
+
+    
+    
+    public void initalize(String name,TreeMap<Integer,String> pageTable){
         Service.serviceIntialize(name,pageTable);
     }
-    public void memoryManager(){
+    
+    
+    public void memoryManager() throws InterruptedException{
         while(requiredPages.size()!=0){
             Integer rPage = requiredPages.remove(0);
-            boolean flag=false;
-            Page temp=null;
-            for (int i = 0; i < pageTable.size(); i++) {
-                if(rPage==(pageTable.get(i).getNumber())){
-                    flag=true;
-                    temp=pageTable.get(i);
-                    break;
-                }
-            }
+            boolean flag = pageTable.containsKey(rPage);
             if(flag){
-                System.out.println(name +": Page Found-> Page Number: "+ temp.getNumber() +" Content: " + temp.getContent());
+                Thread.sleep(4000);
+                synchronized(window){
+                    
+                    window.set(name +": Page Found-> Page Number: "+ rPage +" Content: " + pageTable.get(rPage));
+                }
+                Thread.sleep(4000);
+                System.out.println(name +": Page Found-> Page Number: "+ rPage +" Content: " + pageTable.get(rPage));
             }
             else{
                 //pagefault
-                System.out.println(name +": Page Not Found-> Page Number: "+ rPage);
-              Page newPage = Service.servicePageFault(name, rPage);
-                //LIFO
-                if(pageTable.size()==2){
-                    Page rmPage = pageTable.remove(0);
-                    Service.serviceUpdate(name,rmPage); 
+                Thread.sleep(4000);
+                synchronized(window){
+            
+                    window.set(name +": Page Not Found Page Fualt -> Page Number: "+ rPage);
                 }
-                pageTable.add(newPage);
-                      
+                System.out.println(name +": Page Not Found-> Page Number: "+ rPage);
+                Thread.sleep(4000);
+                synchronized(window){
+                    
+                    window.set("Requesting page to DSM");
+                }
                 
-                
+                String newPage = Service.servicePageFault(name, rPage);
+                Thread.sleep(4000);
+                synchronized(window){
+                    
+                    window.set("Got the required page from DSM");
+                }
+                //LIFO
+                Thread.sleep(4000);
+                if(pageTable.size()==3){
+                    
+                    int temp = pageTable.firstKey();
+                    pageTable.remove(temp);
+                    synchronized(window){
+                    
+                        window.set("Size Full Removing Page "+temp);
+                    }
+                    Thread.sleep(4000);
+                     
+                }
+                Service.serviceUpdate(name,rPage);
+                pageTable.put(rPage,newPage);  
             }
             
         }
+        
+        //Thread.sleep(10000);
+        
     }
     private String name;
 
@@ -57,19 +94,28 @@ public class Node {
         this.name = name;
     }
 
-    public ArrayList<Page> getPageTable() {
-        return pageTable;
-    }
-
-    public void setPageTable(ArrayList<Page> pageTable) {
-        this.pageTable = pageTable;
-    }
-
     public ArrayList<Integer> getRequiredPages() {
         return requiredPages;
     }
 
     public void setRequiredPages(ArrayList<Integer> requiredPages) {
         this.requiredPages = requiredPages;
+    }
+
+    String getPage(int page) throws InterruptedException {
+        Thread.sleep(4000);
+        synchronized(window){
+
+            window.set("DSM requested Page "+page);
+        }
+        Thread.sleep(4000);
+        synchronized(window){
+
+            window.set("Giving DSM the required page");
+        }
+        Thread.sleep(4000);
+                
+        return pageTable.get(page);
+        
     }
 }

@@ -2,49 +2,66 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class DSM {
  
-    ArrayList<Page> allPages;
-    HashMap<Page,String> pageOwner = new HashMap<>();
-    HashMap<Page,List<String>> pageHolders = new HashMap<>();
+    HashMap<Integer,String> pageOwner = new HashMap<>();
+    HashMap<Integer,List<String>> pageHolders = new HashMap<>();
+    MessageWindow window;
     
-    public DSM(ArrayList<Page> all){
-        this.allPages = all;
-
+    DSM(){
+        window = new MessageWindow("DSM");
+        window.setVisible(true);
     }
-    public Page findPage(String newUser, int page){
-        Page rePage = null;
-        for (int i = 0; i < allPages.size(); i++) {
-            if(page==(allPages.get(i).getNumber())){
-                rePage=allPages.get(i);
-                break;
-            }
+    
+    public String findPage(String newUser, int page) throws InterruptedException{
+        
+        
+        String owner = pageOwner.get(page);
+        
+        synchronized(window){
+            window.set("DSM : finding page "+page+" for "+newUser+" from "+owner);
         }
-        List<String> list = pageHolders.get(rePage);
+        
+        //Thread.sleep(1000);
+        System.out.println("DSM : finding page "+page+" for "+newUser+" from "+owner);
+        String s = Service.getPage(owner,page);
+        List<String> list = pageHolders.get(page);
         if(list==null){
            list = new ArrayList<>();
         }
         list.add(newUser);
-        pageHolders.put(rePage, list);
-        return rePage;
+        pageHolders.put(page, list);
+        //Thread.sleep(3000);
+        synchronized(window){
+            window.set("DSM : found page " +page+ " for "+newUser);
+        }
+        
+        System.out.println("DSM : found page " +page+ " for "+newUser);
+        return s;
     }
     
-    public void updatePageHolders(String user, Page rmPage){
+    public void updatePageHolders(String user, int rmPage){
         List<String> list = pageHolders.get(rmPage);
         list.remove(user);
         pageHolders.put(rmPage, list);
+        String newOwner = pageHolders.get(rmPage).get(0);
+        pageOwner.put(rmPage, newOwner);
     }
 
-    public void pageHolderesInitialize(String name,ArrayList<Page> pageTable) {
-        for(int i=0;i<pageTable.size();i++){
-            Page temp = pageTable.get(i);
-            List<String> tempList = pageHolders.get(temp);
+    public void pageHolderesInitialize(String name,TreeMap<Integer,String> pageTable) {
+        for(Map.Entry<Integer,String> entry : pageTable.entrySet()) {
+            int key = entry.getKey();
+            List<String> tempList = pageHolders.get(key);
             if(tempList==null){
                 tempList = new ArrayList<>();
             }
             tempList.add(name);
-            pageHolders.put(temp, tempList);
+            pageHolders.put(key, tempList);
+            if(!pageOwner.containsKey(key))
+                pageOwner.put(key, name);
         }
     }
 }
