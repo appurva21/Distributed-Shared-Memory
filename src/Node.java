@@ -84,10 +84,10 @@ public class Node {
                         window.set("Size FULL--> Removing Page "+temp);
                     }
                     Thread.sleep(4000);
-                     
+                    Service.serviceUpdate(name,rPage);
                 }
                 //function call to update page holders table at DSM layer
-                Service.serviceUpdate(name,rPage);
+                
                 pageTable.put(rPage,newPage);  
             }
             
